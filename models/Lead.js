@@ -34,7 +34,7 @@ const leadSchema = new mongoose.Schema(
     value: {type: Number, default: 0, min: 0},
     notes: {type: String, default: ""},
     tags: [{type: String, trim: true}],
-    aisummary: {type: Number, default: ""},
+    aiSummary: {type: String, default: ""},
     aiRiskScore: {type: Number, default: null},
     order: {type: Number, default: 0},
   },

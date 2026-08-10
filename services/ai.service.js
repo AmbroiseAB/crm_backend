@@ -4,20 +4,35 @@ import {ApiError} from "../utils/ApiError.js";
 let client = null;
 
 const getClient = () => {
-  const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+  const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new ApiError(
       503,
-      "Google GenAI API key is not configured. Please set GOOGLE_GENAI_API_KEY in your environment variables.",
+      "Google GenAI API key is not configured. Please set GOOGLE_GENAI_API_KEY or GEMINI_API_KEY in your environment variables.",
     );
   }
   if (!client) client = new GoogleGenAI({apiKey});
   return client;
 };
 
-const MODEL = () => process.env.GENAI_MODEL || "gemini-2.5-flash";
+const MODEL = () =>
+  process.env.GEMINI_MODEL ||
+  process.env.GOOGLE_GENAI_MODEL ||
+  process.env.GENAI_MODEL ||
+  "gemini-2.5-flash";
 
-export const isAIConfigured = () => Boolean(process.env.GEMINI_API_KEY);
+export const isAIConfigured = () => Boolean(process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY);
+
+const extractResponseText = (response) => {
+  if (typeof response.text === "string" && response.text.trim()) return response.text.trim();
+  if (Array.isArray(response.output)) {
+    const textContent = response.output
+      .flatMap((item) => item.content || [])
+      .find((content) => content.mimeType === "text/plain" || content.text);
+    if (textContent?.text) return String(textContent.text).trim();
+  }
+  return "";
+};
 
 const generateJSON = async (prompt, schema) => {
   const ai = getClient();
@@ -31,9 +46,14 @@ const generateJSON = async (prompt, schema) => {
         temperature: 0.6,
       },
     });
-    return JSON.parse(response.text);
+    const raw = extractResponseText(response);
+    if (!raw) {
+      throw new ApiError(502, "AI responded with an empty body.");
+    }
+    return JSON.parse(raw);
   } catch (err) {
-    console.error("Gemini JSON error:", err?.message || err);
+    console.error("Gemini JSON error:", err?.message || err, err?.response || "no-response");
+    if (err instanceof ApiError) throw err;
     throw new ApiError(502, "AI request failed. Please try again in a moment.");
   }
 };
@@ -64,7 +84,7 @@ Email: ${lead.email || "N/A"}
 current pipeline stage: ${lead.status || "New"}
 potential deal value: ${lead.value || "0"}
 source: ${lead.source || "Unknown"}
-Note: ${lead.note || "None"}
+Note: ${lead.notes || "None"}
 
 Return JSON only.`;
 

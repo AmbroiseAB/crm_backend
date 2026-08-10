@@ -10,7 +10,7 @@ import {
 
 const resolveLead = async (req) => {
   if (req.body.leadId) {
-    const lead = await lead.findOne({_id: req.body.leadId, owner: req.user._id});
+    const lead = await Lead.findOne({_id: req.body.leadId, owner: req.user._id});
     if (!lead) throw new ApiError(404, "Lead not found");
     return lead;
   }
@@ -45,13 +45,13 @@ export const generateEmailDraft = asyncHandler(async(req, res) => {
   const {purpose, tone} = req.body;
 
   const result = await generateEmail({
-    lead, 
+    lead,
     purpose,
     tone,
     sender: {name: req.user.name, company: req.user.company},
   });
 
-  res.json({succes:true, ...result});
+  res.json({success: true, ...result});
 });
 
 export const salesInsights = asyncHandler(async(req, res) => {
