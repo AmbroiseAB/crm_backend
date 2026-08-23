@@ -22,7 +22,7 @@ export const aiStatus = asyncHandler(async(req, res) => {
   res.json({
     success: true,
     configured: isAIConfigured(),
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-3.6-flash",
   });
 });
 
@@ -76,7 +76,7 @@ const buildPipelineStats = (leads) => {
     totalValue += l.value || 0;
   }
   const won = byStage.Won?.count || 0;
-  const loss = byStage.Lost?.count || 0;
+  const lost = byStage.Lost?.count || 0;
   const closed = won + lost;
   return {
     totalLeads: leads.length,

@@ -19,7 +19,23 @@ const MODEL = () =>
   process.env.GEMINI_MODEL ||
   process.env.GOOGLE_GENAI_MODEL ||
   process.env.GENAI_MODEL ||
-  "gemini-2.5-flash";
+  "gemini-3.6-flash";
+
+const aiErrorMessage = (err) => {
+  const status = err?.status || err?.statusCode || err?.response?.status;
+  const details = `${err?.message || ""} ${err?.response?.data?.message || ""}`.toLowerCase();
+
+  if (status === 401 || status === 403 || details.includes("api key") || details.includes("permission")) {
+    return "AI credentials were rejected. Check GEMINI_API_KEY in the backend environment.";
+  }
+  if (status === 404 || details.includes("not found") || details.includes("no longer available")) {
+    return "The configured AI model is unavailable. Update GEMINI_MODEL in the backend environment.";
+  }
+  if (status === 429 || details.includes("quota") || details.includes("rate limit") || details.includes("billing")) {
+    return "AI quota or credits are exhausted. Check the Google AI Studio billing and usage limits.";
+  }
+  return "AI request failed. Please try again in a moment.";
+};
 
 export const isAIConfigured = () => Boolean(process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY);
 
@@ -54,7 +70,7 @@ const generateJSON = async (prompt, schema) => {
   } catch (err) {
     console.error("Gemini JSON error:", err?.message || err, err?.response || "no-response");
     if (err instanceof ApiError) throw err;
-    throw new ApiError(502, "AI request failed. Please try again in a moment.");
+    throw new ApiError(502, aiErrorMessage(err));
   }
 };
 
@@ -69,7 +85,7 @@ const generateText = async (prompt, temperature = 0.7) => {
     return response.text.trim();
   } catch (err) {
     console.error("Gemini text error:", err?.message || err);
-    throw new ApiError(502, "AI request failed. Please try again in a moment.");
+    throw new ApiError(502, aiErrorMessage(err));
   }
 };
 
