@@ -18,6 +18,7 @@ const taskSchema = new mongoose.Schema(
     priority: { type: String, enum: TASK_PRIORITIES, default: "Medium"},
     relatedLead: { type: mongoose.Schema.Types.ObjectId, ref: "Lead", default: null },
     relatedContact: { type: mongoose.Schema.Types.ObjectId, ref: "Contact", default: null },
+    isNextAction: { type: Boolean, default: false },
     completedAt: { type: Date, default: null },
   },
   { timestamps: true },

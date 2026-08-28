@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {BUYING_INTENTS, QUALIFICATION_STATUSES} from "../services/lead-scoring.service.js";
 
 export const LEAD_STATUSES = ["New", "Qualified", "Proposal", "Won", "Lost"];
 export const LEAD_PRIORITIES = ["Low", "Medium", "High"];
@@ -34,6 +35,15 @@ const leadSchema = new mongoose.Schema(
     value: {type: Number, default: 0, min: 0},
     notes: {type: String, default: ""},
     tags: [{type: String, trim: true}],
+    nextAction: {type: String, trim: true, default: null, maxlength: 500},
+    nextActionDueAt: {type: Date, default: null, index: true},
+    nextActionTask: {type: mongoose.Schema.Types.ObjectId, ref: "Task", default: null},
+    qualificationStatus: {type: String, enum: QUALIFICATION_STATUSES, default: "UNQUALIFIED", index: true},
+    buyingIntent: {type: String, enum: BUYING_INTENTS, default: null},
+    decisionMakerIdentified: {type: Boolean, default: false},
+    budgetKnown: {type: Boolean, default: false},
+    timelineKnown: {type: Boolean, default: false},
+    needIdentified: {type: Boolean, default: false},
     aiSummary: {type: String, default: ""},
     aiRiskScore: {type: Number, default: null},
     order: {type: Number, default: 0},

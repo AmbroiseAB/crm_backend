@@ -1,6 +1,17 @@
 import {Note} from "../models/Note.js";
+import {Lead} from "../models/Lead.js";
+import {Contact} from "../models/Contact.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
+
+const validateNoteLinks = async ({leadId, contactId, owner}) => {
+  if (leadId && !(await Lead.exists({_id: leadId, owner}))) {
+    throw new ApiError(404, "Lead not found");
+  }
+  if (contactId && !(await Contact.exists({_id: contactId, owner}))) {
+    throw new ApiError(404, "Contact not found");
+  }
+};
 
 export const getNotes = asyncHandler(async (req, res) => {
   const {lead, contact, search} = req.query;
@@ -19,6 +30,7 @@ export const getNotes = asyncHandler(async (req, res) => {
 export const createNote = asyncHandler(async (req, res) => {
   const {content, lead, contact, pinned} = req.body;
   if (!content) throw new ApiError(400, "Note content is required");
+  await validateNoteLinks({leadId: lead, contactId: contact, owner: req.user._id});
 
   const note = await Note.create({
     owner: req.user._id,
@@ -32,6 +44,7 @@ export const createNote = asyncHandler(async (req, res) => {
 
 export const updateNote = asyncHandler(async (req, res) => {
   const {owner, ...updates} = req.body;
+  await validateNoteLinks({leadId: updates.lead, contactId: updates.contact, owner: req.user._id});
   const note = await Note.findOneAndUpdate(
     {_id: req.params.id, owner: req.user._id},
     updates,

@@ -9,7 +9,6 @@ const toClientUser = (user) => ({
   email: user.email,
   role: user.role,
   company: user.company,
-  avatar: user.avatar,
   createdAt: user.createdAt,
 });
 
@@ -58,12 +57,11 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, company, avatar, password } = req.body;
+  const { name, company, password } = req.body;
   const user = req.user;
 
   if (name != undefined) user.name = name;
   if (company != undefined) user.company = company;
-  if (avatar != undefined) user.avatar = avatar;
   if (password) user.password = password;
 
   await user.save();

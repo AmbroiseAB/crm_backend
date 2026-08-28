@@ -1,6 +1,19 @@
 import {Task} from "../models/Task.js";
+import {Lead} from "../models/Lead.js";
+import {Contact} from "../models/Contact.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
+
+const validateTaskLinks = async ({updates, owner}) => {
+  if (updates.relatedLead) {
+    const lead = await Lead.exists({_id: updates.relatedLead, owner});
+    if (!lead) throw new ApiError(404, "Lead not found");
+  }
+  if (updates.relatedContact) {
+    const contact = await Contact.exists({_id: updates.relatedContact, owner});
+    if (!contact) throw new ApiError(404, "Contact not found");
+  }
+};
 
 export const getTasks = asyncHandler(async (req, res) => {
   const {status, priority, relatedLead} = req.query;
@@ -18,12 +31,15 @@ export const getTasks = asyncHandler(async (req, res) => {
 });
 
 export const createTask = asyncHandler(async (req, res) => {
-  const task = await Task.create({...req.body, owner: req.user._id});
+  const {owner, ...updates} = req.body;
+  await validateTaskLinks({updates, owner: req.user._id});
+  const task = await Task.create({...updates, owner: req.user._id});
   res.status(201).json({success: true, task});
 });
 
 export const updateTask = asyncHandler(async (req, res) => {
   const {owner, ...updates} = req.body;
+  await validateTaskLinks({updates, owner: req.user._id});
   
   if (updates.status === "Completed" && !updates.completedAt) {
     updates.completedAt = new Date();

@@ -28,7 +28,6 @@ const userSchema = new mongoose.Schema(
       default: "owner",
     },
     company: {type: String, trim: true, default: ""},
-    avatar: {type: String, default: ""},
   },
   {timestamps: true}
 );

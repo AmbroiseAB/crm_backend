@@ -90,8 +90,9 @@ const generateText = async (prompt, temperature = 0.7) => {
 };
 
 export const generateLeadSummary = async (lead) => {
-  const prompt = `You are an expert B2B sales analyst for a CRM called TTP CRM.
+  const prompt = `You are an expert B2B sales analyst for a CRM called Infonova.
 Analyze the following sales lead and provide a concise assessment,
+Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
 
 Lead details:
 Name: ${lead.name || "N/A"}
@@ -134,6 +135,7 @@ export const generateEmail = async ({lead, purpose, tone, sender}) => {
   const prompt = `You are a senior rep writing on behalf of ${sender?.name || "our team"}${sender?.company ? ` at ${sender.company}` : ""}.
 
   Write a professional sales email,
+Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
   Purpose: ${purpose || "follow-up"}
   Desired tone: ${tone || "friendly and professional"}
 
@@ -145,7 +147,7 @@ export const generateEmail = async ({lead, purpose, tone, sender}) => {
 
   Return JSON only with a completing subject line and a complete email body,
   Use line breaks (\\) in the body. Keep it under 100 words. Sign off as ${
-    sender?.name || "The TTP CRM team"
+    sender?.name || "The Infonova team"
   },`;
 
   const schema = {
@@ -164,6 +166,7 @@ export const generateSalesInsights = async (pipelineStats) => {
   const prompt = `You are a revenue-operations advisor. Given this insight of a
   sales pipeline, identify what is wrong, what is at risk, and concrete actions
   to improve conversion,
+Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
   
   Pipeline snapshot (JSON):
   ${JSON.stringify(pipelineStats, null, 2)}

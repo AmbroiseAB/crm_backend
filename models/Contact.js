@@ -19,11 +19,11 @@ const contactSchema = new mongoose.Schema(
     title: {type: String, trim: true, default:""},
     tags: [{type: String, trim: true, default:""}],
     notes: {type: String, default:""},
-    favorite: {type: Boolean, default:""},
+    favorite: {type: Boolean, default: false},
   },
   {timestamps: true},
 );
 
-contactSchema.index[{name: "text", email: "text", company: "text"}];
+contactSchema.index({name: "text", email: "text", company: "text"});
 
 export const Contact = mongoose.model("Contact", contactSchema);
