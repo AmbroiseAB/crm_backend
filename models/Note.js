@@ -8,7 +8,7 @@ const noteSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    content: { type: String, required: [true , "Note content is required"] },
+    content: { type: String, required: [true , "Note content is required"], trim: true, maxlength: 10000 },
     lead: { type: mongoose.Schema.Types.ObjectId, ref: "Lead", default: null },
     contact: { 
       type: mongoose.Schema.Types.ObjectId, 

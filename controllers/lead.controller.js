@@ -10,6 +10,18 @@ import {
   INTERACTION_DIRECTIONS,
   INTERACTION_OUTCOMES,
 } from "../models/Interaction.js";
+import {normalizeEmail, normalizeName, validateEmail, validateName, validatePhone} from "../utils/validation.js";
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+const editableLeadFields = ["name", "email", "phone", "phoneCountry", "company", "status", "priority", "source", "value", "notes"];
+const normalizeLead = (body) => {
+  const updates = Object.fromEntries(editableLeadFields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]));
+  if (updates.name !== undefined) { updates.name = normalizeName(updates.name); const error = validateName(updates.name, "Lead name"); if (error) throw new ApiError(400, error); }
+  if (updates.email !== undefined) { updates.email = normalizeEmail(updates.email); const error = validateEmail(updates.email); if (error) throw new ApiError(400, error); }
+  if (updates.phone !== undefined) { updates.phone = typeof updates.phone === "string" ? updates.phone.trim() : updates.phone; const error = validatePhone(updates.phone, updates.phoneCountry); if (error) throw new ApiError(400, error); }
+  if (updates.value !== undefined && (typeof updates.value !== "number" || !Number.isFinite(updates.value) || updates.value < 0)) throw new ApiError(400, "Deal value must be a finite non-negative number");
+  return updates;
+};
 
 export const getLeads = asyncHandler(async (req, res) => {
   const {status, priority, source, qualificationStatus, search } = req.query;
@@ -20,7 +32,7 @@ export const getLeads = asyncHandler(async (req, res) => {
   if (source) filter.source = source;
   if (qualificationStatus) filter.qualificationStatus = qualificationStatus;
   if (search) {
-    const rx = new RegExp(search, "i");
+    const rx = new RegExp(escapeRegex(search.slice(0, 100)), "i");
     filter.$or = [{name: rx}, {email: rx}, {company: rx}];
   }
 
@@ -35,7 +47,7 @@ export const getLead = asyncHandler(async (req, res) => {
 });
 
 export const createLead = asyncHandler(async (req, res) => {
-  const lead = await Lead.create({...req.body, owner: req.user._id});
+  const lead = await Lead.create({...normalizeLead(req.body), owner: req.user._id});
   try {
     await StageHistory.create({leadId: lead._id, changedBy: req.user._id, fromStage: null, toStage: lead.status, changedAt: lead.createdAt});
     await Interaction.create({
@@ -227,7 +239,7 @@ const changeLeadStage = async ({lead, nextStage, userId}) => {
 };
 
 export const updateLead = asyncHandler(async (req, res) => {
-  const {owner, ...updates} = req.body;
+  const updates = normalizeLead(req.body);
   const lead = await Lead.findOne({_id: req.params.id, owner: req.user._id});
   if (!lead) throw new ApiError(404, "Lead not found");
   const requestedStage = updates.status;
@@ -252,6 +264,7 @@ export const reorderLeads = asyncHandler(async (req, res) => {
   }
 
   await Promise.all(updates.map(async (u) => {
+    if (u.order !== undefined && (typeof u.order !== "number" || !Number.isFinite(u.order) || u.order < 0)) throw new ApiError(400, "Lead order must be a finite non-negative number");
     const lead = await Lead.findOne({_id: u.id, owner: req.user._id});
     if (!lead) return;
     if (u.status && u.status !== lead.status) await changeLeadStage({lead, nextStage: u.status, userId: req.user._id});

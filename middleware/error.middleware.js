@@ -26,9 +26,9 @@ export const errorHandler = (err, req, res, next) => {
   // Mongoose: schema validation
   if (err.name === "ValidationError") {
     statusCode = 400;
-    const field = Object.values(err.errors)
+    message = Object.values(err.errors)
       .map((e) => e.message)
-      .join(",");
+      .join(", ");
   }
 
   if (process.env.NODE_ENV !== "production" && statusCode === 500) {

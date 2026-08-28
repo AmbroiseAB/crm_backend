@@ -14,6 +14,15 @@ const validateTaskLinks = async ({updates, owner}) => {
     if (!contact) throw new ApiError(404, "Contact not found");
   }
 };
+const editableTaskFields = ["title", "description", "dueDate", "status", "priority", "relatedLead", "relatedContact"];
+const normalizeTask = (body) => {
+  const updates = Object.fromEntries(editableTaskFields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]));
+  if (updates.title !== undefined && (typeof updates.title !== "string" || updates.title.trim().length < 2)) throw new ApiError(400, "Task title must be at least 2 characters");
+  if (updates.title !== undefined) updates.title = updates.title.trim();
+  if (updates.description !== undefined) { if (typeof updates.description !== "string" || updates.description.length > 5000) throw new ApiError(400, "Task description cannot exceed 5000 characters"); updates.description = updates.description.trim(); }
+  if (updates.dueDate !== undefined && updates.dueDate !== null && updates.dueDate !== "" && Number.isNaN(new Date(updates.dueDate).getTime())) throw new ApiError(400, "Due date must be a valid date");
+  return updates;
+};
 
 export const getTasks = asyncHandler(async (req, res) => {
   const {status, priority, relatedLead} = req.query;
@@ -31,14 +40,14 @@ export const getTasks = asyncHandler(async (req, res) => {
 });
 
 export const createTask = asyncHandler(async (req, res) => {
-  const {owner, ...updates} = req.body;
+  const updates = normalizeTask(req.body);
   await validateTaskLinks({updates, owner: req.user._id});
   const task = await Task.create({...updates, owner: req.user._id});
   res.status(201).json({success: true, task});
 });
 
 export const updateTask = asyncHandler(async (req, res) => {
-  const {owner, ...updates} = req.body;
+  const updates = normalizeTask(req.body);
   await validateTaskLinks({updates, owner: req.user._id});
   
   if (updates.status === "Completed" && !updates.completedAt) {
