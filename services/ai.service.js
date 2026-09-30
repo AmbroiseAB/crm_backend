@@ -22,19 +22,38 @@ const MODEL = () =>
   "gemini-3.6-flash";
 
 const aiErrorMessage = (err) => {
-  const status = err?.status || err?.statusCode || err?.response?.status;
-  const details = `${err?.message || ""} ${err?.response?.data?.message || ""}`.toLowerCase();
+  const status = Number(err?.status || err?.statusCode || err?.response?.status);
+  const code = err?.code || err?.cause?.code;
+  const details = `${err?.message || ""} ${err?.cause?.message || ""} ${err?.response?.data?.message || ""}`.toLowerCase();
+  const safeDetails = String(err?.response?.data?.message || err?.message || "")
+    .replace(/AIza[\w-]{20,}/g, "[hidden]")
+    .replace(/([?&](?:key|token)=)[^&\s]+/gi, "$1[hidden]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180);
 
   if (status === 401 || status === 403 || details.includes("api key") || details.includes("permission")) {
-    return "AI credentials were rejected. Check GEMINI_API_KEY in the backend environment.";
+    return "Google AI rejected the API key or access. Check the key and its permissions in the backend settings.";
   }
   if (status === 404 || details.includes("not found") || details.includes("no longer available")) {
-    return "The configured AI model is unavailable. Update GEMINI_MODEL in the backend environment.";
+    return "The selected Google AI model is unavailable. Check GEMINI_MODEL in the backend settings.";
   }
   if (status === 429 || details.includes("quota") || details.includes("rate limit") || details.includes("billing")) {
-    return "AI quota or credits are exhausted. Check the Google AI Studio billing and usage limits.";
+    return "Google AI usage is currently limited. Check the API quota and billing, then try again.";
   }
-  return "AI request failed. Please try again in a moment.";
+  if (status === 400) {
+    return `Google AI could not process this request${safeDetails ? `: ${safeDetails}` : ". Check the model and request settings."}`;
+  }
+  if (
+    status >= 500 ||
+    ["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "ECONNRESET", "EAI_AGAIN"].includes(code) ||
+    /fetch failed|network error|socket|deadline exceeded|temporarily unavailable/.test(details)
+  ) {
+    return "Google AI is temporarily unavailable or unreachable. Check the backend connection and try again.";
+  }
+  return safeDetails
+    ? `Google AI request failed: ${safeDetails}`
+    : "Google AI request failed without an explanation. Check the backend logs for details.";
 };
 
 export const isAIConfigured = () => Boolean(process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY);
@@ -90,8 +109,9 @@ const generateText = async (prompt, temperature = 0.7) => {
 };
 
 export const generateLeadSummary = async (lead) => {
-  const prompt = `You are an expert B2B sales analyst for a CRM called Infonova.
-Analyze the following sales lead and provide a concise assessment,
+  const prompt = `You help a sales team understand and follow up with leads.
+Use plain, everyday English. Avoid sales jargon and acronyms. Keep sentences short and clear.
+Analyze this lead and give a concise assessment.
 Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
 
 Lead details:
@@ -110,7 +130,7 @@ Return JSON only.`;
     properties: {
       summary: {
         type: "string",
-        description: "2-3 sentence executive summary of the lead",
+        description: "A clear 2-3 sentence summary in simple English",
       },
       riskScore: {
         type: "integer",
@@ -122,7 +142,7 @@ Return JSON only.`;
       },
       nextBestAction: {
         type: "string",
-        description: "One concrete recommended next step",
+        description: "One specific next step in simple words, including who to contact and what to do when the details support it",
       },
     },
     required: ["summary", "riskScore", "suggestedPriority", "nextBestAction"],
@@ -134,7 +154,7 @@ Return JSON only.`;
 export const generateEmail = async ({lead, purpose, tone, sender}) => {
   const prompt = `You are a senior rep writing on behalf of ${sender?.name || "our team"}${sender?.company ? ` at ${sender.company}` : ""}.
 
-  Write a professional sales email,
+  Write a professional sales email in plain, everyday English. Avoid jargon and acronyms. Keep sentences short and easy to understand.
 Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
   Purpose: ${purpose || "follow-up"}
   Desired tone: ${tone || "friendly and professional"}
@@ -163,9 +183,9 @@ Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency sy
 };
 
 export const generateSalesInsights = async (pipelineStats) => {
-  const prompt = `You are a revenue-operations advisor. Given this insight of a
-  sales pipeline, identify what is wrong, what is at risk, and concrete actions
-  to improve conversion,
+  const prompt = `You help a sales team understand its pipeline.
+Use plain, everyday English. Avoid business jargon and acronyms. Keep sentences short and clear.
+Based on this pipeline data, explain what needs attention and suggest clear actions.
 Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
   
   Pipeline snapshot (JSON):
