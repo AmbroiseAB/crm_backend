@@ -2,7 +2,7 @@ import { Lead } from "../models/Lead.js";
 import { Contact } from "../models/Contact.js";
 import { Task } from "../models/Task.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { updateTask } from "./task.controller.js";
+import { buildScope } from "../utils/scope.js";
 
 const normalizeStatus = (status) => {
   if (!status) return "New";
@@ -16,12 +16,12 @@ const normalizeStatus = (status) => {
 };
 
 export const getOverview = asyncHandler(async(req, res) => {
-  const owner = req.user._id;
+  const scope = buildScope(req);
 
   const [leads, contactCount, openTasks] = await Promise.all([
-    Lead.find({owner}),
-    Contact.countDocuments({owner}),
-    Task.countDocuments({owner, status: {$ne: "Completed"}}),
+    Lead.find(scope),
+    Contact.countDocuments(scope),
+    Task.countDocuments({...scope, status: {$ne: "Completed"}}),
   ]);
 
   const stages = ["New", "Qualified", "Proposal", "Won", "Lost"];

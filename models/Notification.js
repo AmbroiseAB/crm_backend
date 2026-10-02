@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const notificationSchema = new mongoose.Schema(
   {
     owner: {type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true},
-    type: {type: String, enum: ["AI_SUMMARY", "AI_INSIGHT", "AI_DRAFT"], required: true},
+    type: {type: String, enum: ["AI_SUMMARY", "AI_INSIGHT", "AI_DRAFT", "LEAD_ASSIGNED", "LEAD_WEB"], required: true},
     title: {type: String, required: true, trim: true},
     message: {type: String, required: true, trim: true},
     details: {type: String, default: "", trim: true},

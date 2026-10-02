@@ -3,6 +3,7 @@ import {
   aiStatus,
   leadSummary,
   generateEmailDraft,
+  nextBestAction,
   salesInsights,
   getAIResults,
 } from "../controllers/ai.controller.js"
@@ -15,6 +16,7 @@ router.get("/status", aiStatus);
 router.get("/results", getAIResults);
 router.post("/lead-summary", leadSummary);
 router.post("/generate-email", generateEmailDraft);
+router.post("/next-best-action", nextBestAction);
 router.post("/sales-insights", salesInsights);
 
 export default router; 

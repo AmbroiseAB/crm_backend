@@ -26,6 +26,15 @@ export const protect = asyncHandler(async (req, res, next) => {
   if (!user) {
     throw new ApiError(401, "Not authorized, user no longer exists");
   }
+  if (user.active === false) {
+    throw new ApiError(403, "This account has been deactivated");
+  }
+
+  // Backfill org for any pre-migration document so scoping always works.
+  if (!user.org) {
+    user.org = user._id;
+    await user.save();
+  }
 
   req.user = user;
   next();

@@ -14,6 +14,8 @@ import analyticsRoutes from "./routes/analytics.routes.js";
 import actionCenterRoutes from "./routes/action-center.routes.js";
 import pipelineRoutes from "./routes/pipeline.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import publicRoutes from "./routes/public.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 const app = express();
 
@@ -35,7 +37,10 @@ if (process.env.NODE_ENV !== "production") app.use(morgan("dev"));
 app.get("/api/health", (req, res) =>
   res.json({success: true, status: "ok", service: "Infonova CRM API"}),
 );
+// Public (unauthenticated) web-to-lead endpoints.
+app.use("/api/public", publicRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/notes", noteRoutes);

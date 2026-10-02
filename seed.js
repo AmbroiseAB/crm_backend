@@ -67,23 +67,29 @@ async function seed() {
   const password = await bcrypt.hash("InfonovaSeed2026!", 10);
   const user = await User.findOneAndUpdate(
     {email: "demo@infonova.test"},
-    {name: "Demo Sales Manager", email: "demo@infonova.test", password, company: "Infonova Demo Business"},
+    {name: "Demo Sales Manager", email: "demo@infonova.test", password, company: "Infonova Demo Business", role: "admin", active: true},
     {upsert: true, new: true, setDefaultsOnInsert: true},
   );
   const owner = user._id;
+  // Make the demo user a self-owned org admin so the multi-actor scoping works.
+  user.org = owner;
+  user.orgSettings = {name: "Infonova Demo Business", slug: "infonova-demo", autoAssign: false, roundRobinCursor: 0};
+  await user.save();
   await Promise.all([
     Lead.deleteMany({owner}), Contact.deleteMany({owner}), Note.deleteMany({owner}), Task.deleteMany({owner}),
     Notification.deleteMany({owner}),
   ]);
   const contacts = await Contact.insertMany([
-    {owner, name: "Nadia Fomo", email: "nadia@mboa-cloud.test", phone: "+237 690 001 201", company: "Mboa Cloud Services", title: "Procurement Lead", tags: ["technology", "priority"]},
-    {owner, name: "Armand Taku", email: "armand@littoral-buildworks.test", phone: "+237 690 001 202", company: "Littoral Buildworks", title: "Projects Director", tags: ["construction"]},
-    {owner, name: "Mireille Kengne", email: "mireille@centreline-clinics.test", phone: "+237 690 001 203", company: "Centreline Clinics", title: "Clinic Administrator", tags: ["healthcare"]},
-    {owner, name: "Patrick Ewane", email: "patrick@urbannest-realty.test", phone: "+237 690 001 204", company: "UrbanNest Realty", title: "Managing Director", tags: ["real-estate", "won"]},
+    {owner, org: owner, assignedTo: owner, name: "Nadia Fomo", email: "nadia@mboa-cloud.test", phone: "+237 690 001 201", company: "Mboa Cloud Services", title: "Procurement Lead", tags: ["technology", "priority"]},
+    {owner, org: owner, assignedTo: owner, name: "Armand Taku", email: "armand@littoral-buildworks.test", phone: "+237 690 001 202", company: "Littoral Buildworks", title: "Projects Director", tags: ["construction"]},
+    {owner, org: owner, assignedTo: owner, name: "Mireille Kengne", email: "mireille@centreline-clinics.test", phone: "+237 690 001 203", company: "Centreline Clinics", title: "Clinic Administrator", tags: ["healthcare"]},
+    {owner, org: owner, assignedTo: owner, name: "Patrick Ewane", email: "patrick@urbannest-realty.test", phone: "+237 690 001 204", company: "UrbanNest Realty", title: "Managing Director", tags: ["real-estate", "won"]},
   ]);
   const leads = await Lead.insertMany(leadsData.map((lead) => ({
     ...lead,
     owner,
+    org: owner,
+    assignedTo: owner,
     createdAt: ago(Math.abs(journeys[lead.company]?.[0]?.[0] ?? -1), 9),
   })));
   const leadByCompany = new Map(leads.map((lead) => [lead.company, lead]));
@@ -112,10 +118,10 @@ async function seed() {
   ]);
 
   await Note.insertMany([
-    {owner, lead: leadByCompany.get("Mboa Cloud Services")._id, content: "Discovery brief should cover data residency, migration timing, and support hours.", pinned: true},
-    {owner, lead: leadByCompany.get("Douala Trade Finance")._id, content: "Decision expected after the finance committee review.", pinned: true},
-    {owner, contact: contacts[2]._id, content: "Clinic administrator prefers a phased rollout after the current quarter.", pinned: false},
-    {owner, content: "Keep the next Action Center review focused on overdue proposals.", pinned: false},
+    {owner, org: owner, lead: leadByCompany.get("Mboa Cloud Services")._id, content: "Discovery brief should cover data residency, migration timing, and support hours.", pinned: true},
+    {owner, org: owner, lead: leadByCompany.get("Douala Trade Finance")._id, content: "Decision expected after the finance committee review.", pinned: true},
+    {owner, org: owner, contact: contacts[2]._id, content: "Clinic administrator prefers a phased rollout after the current quarter.", pinned: false},
+    {owner, org: owner, content: "Keep the next Action Center review focused on overdue proposals.", pinned: false},
   ]);
   await Notification.create({owner, type: "AI_INSIGHT", title: "AI pipeline insight", message: "Several active opportunities need a dated next action to keep the pipeline moving.", details: "Review the Action Center before the next sales block.", fingerprint: "seed:ai-insight:pipeline"});
 
@@ -126,7 +132,7 @@ async function seed() {
     ["UrbanNest Realty", "Send onboarding summary", ago(8), "Medium", "Completed"],
     ["Northern Route Transport", "Confirm renewal contact", fromNow(7), "Low", "Pending"],
   ];
-  const tasks = await Task.insertMany(taskSpecs.map(([company, title, dueDate, priority, status]) => ({owner, relatedLead: leadByCompany.get(company)._id, title, dueDate, priority, status, isNextAction: Boolean(leadByCompany.get(company).nextAction), completedAt: status === "Completed" ? ago(7) : null})));
+  const tasks = await Task.insertMany(taskSpecs.map(([company, title, dueDate, priority, status]) => ({owner, org: owner, assignedTo: owner, relatedLead: leadByCompany.get(company)._id, title, dueDate, priority, status, isNextAction: Boolean(leadByCompany.get(company).nextAction), completedAt: status === "Completed" ? ago(7) : null})));
   for (const task of tasks) {
     const lead = leads.find((candidate) => String(candidate._id) === String(task.relatedLead));
     if (lead && lead.nextAction) {

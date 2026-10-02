@@ -29,8 +29,33 @@ const userSchema = new mongoose.Schema(
       match: [PASSWORD_PATTERN, "Password must be 8-128 characters and include uppercase, lowercase, number, and special character"],
     },
     company: {type: String, trim: true, default: ""},
+    // ── Multi-actor fields (additive) ──────────────────────────────────
+    role: {
+      type: String,
+      enum: ["admin", "manager", "agent"],
+      default: "admin",
+      index: true,
+    },
+    // The workspace/account owner this user belongs to. For an admin, org = self.
+    org: {type: mongoose.Schema.Types.ObjectId, ref: "User", index: true, default: null},
+    active: {type: Boolean, default: true},
+    // Org-level settings — only meaningful on the org owner (admin) document.
+    orgSettings: {
+      name: {type: String, trim: true, default: ""},
+      slug: {type: String, trim: true, lowercase: true, default: null},
+      autoAssign: {type: Boolean, default: false},
+      roundRobinCursor: {type: Number, default: 0},
+    },
   },
   {timestamps: true}
+);
+
+// Unique across org owners only. A partial filter (not sparse) is required
+// because non-owners store slug=null explicitly, and a sparse unique index
+// would still index those nulls and collide. Partial indexes only string slugs.
+userSchema.index(
+  {"orgSettings.slug": 1},
+  {unique: true, partialFilterExpression: {"orgSettings.slug": {$type: "string"}}},
 );
 
 userSchema.pre("save", async function (next) {

@@ -3,14 +3,15 @@ import {Lead} from "../models/Lead.js";
 import {Contact} from "../models/Contact.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
+import {buildScope} from "../utils/scope.js";
 
-const validateTaskLinks = async ({updates, owner}) => {
+const validateTaskLinks = async ({updates, org}) => {
   if (updates.relatedLead) {
-    const lead = await Lead.exists({_id: updates.relatedLead, owner});
+    const lead = await Lead.exists({_id: updates.relatedLead, org});
     if (!lead) throw new ApiError(404, "Lead not found");
   }
   if (updates.relatedContact) {
-    const contact = await Contact.exists({_id: updates.relatedContact, owner});
+    const contact = await Contact.exists({_id: updates.relatedContact, org});
     if (!contact) throw new ApiError(404, "Contact not found");
   }
 };
@@ -26,7 +27,7 @@ const normalizeTask = (body) => {
 
 export const getTasks = asyncHandler(async (req, res) => {
   const {status, priority, relatedLead} = req.query;
-  const filter = {owner: req.user._id};
+  const filter = buildScope(req);
   if (status) filter.status = status;
   if (priority) filter.priority = priority;
   if (relatedLead) filter.relatedLead = relatedLead;
@@ -41,15 +42,19 @@ export const getTasks = asyncHandler(async (req, res) => {
 
 export const createTask = asyncHandler(async (req, res) => {
   const updates = normalizeTask(req.body);
-  await validateTaskLinks({updates, owner: req.user._id});
-  const task = await Task.create({...updates, owner: req.user._id});
+  await validateTaskLinks({updates, org: req.user.org});
+  // Managers/admins may assign; everyone else owns the tasks they create.
+  const assignedTo = req.body.assignedTo && (req.user.role === "admin" || req.user.role === "manager")
+    ? req.body.assignedTo
+    : req.user._id;
+  const task = await Task.create({...updates, owner: req.user._id, org: req.user.org, assignedTo});
   res.status(201).json({success: true, task});
 });
 
 export const updateTask = asyncHandler(async (req, res) => {
   const updates = normalizeTask(req.body);
-  await validateTaskLinks({updates, owner: req.user._id});
-  
+  await validateTaskLinks({updates, org: req.user.org});
+
   if (updates.status === "Completed" && !updates.completedAt) {
     updates.completedAt = new Date();
   }
@@ -58,7 +63,7 @@ export const updateTask = asyncHandler(async (req, res) => {
   }
 
   const task = await Task.findOneAndUpdate(
-    {_id: req.params.id, owner: req.user._id},
+    {_id: req.params.id, ...buildScope(req)},
     updates,
     {new: true, runValidators: true},
   );
@@ -69,7 +74,7 @@ export const updateTask = asyncHandler(async (req, res) => {
 export const deleteTask = asyncHandler(async (req, res) => {
   const task = await Task.findOneAndDelete({
     _id: req.params.id,
-    owner: req.user._id,
+    ...buildScope(req),
   });
   if (!task) throw new ApiError(404, "Task not found");
   res.json({success: true, message: "Task deleted"});
