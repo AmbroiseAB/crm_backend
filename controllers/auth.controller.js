@@ -8,7 +8,6 @@ const toClientUser = (user) => ({
   id: user._id,
   name: user.name,
   email: user.email,
-  role: user.role,
   company: user.company,
   createdAt: user.createdAt,
 });

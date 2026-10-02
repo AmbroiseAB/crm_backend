@@ -67,7 +67,7 @@ async function seed() {
   const password = await bcrypt.hash("InfonovaSeed2026!", 10);
   const user = await User.findOneAndUpdate(
     {email: "demo@infonova.test"},
-    {name: "Demo Sales Manager", email: "demo@infonova.test", password, company: "Infonova Demo Business", role: "owner"},
+    {name: "Demo Sales Manager", email: "demo@infonova.test", password, company: "Infonova Demo Business"},
     {upsert: true, new: true, setDefaultsOnInsert: true},
   );
   const owner = user._id;

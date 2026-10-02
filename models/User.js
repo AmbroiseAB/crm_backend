@@ -28,11 +28,6 @@ const userSchema = new mongoose.Schema(
       maxlength: [128, "Password cannot exceed 128 characters"],
       match: [PASSWORD_PATTERN, "Password must be 8-128 characters and include uppercase, lowercase, number, and special character"],
     },
-    role: {
-      type: String,
-      enum: ["owner", "member"],
-      default: "owner",
-    },
     company: {type: String, trim: true, default: ""},
   },
   {timestamps: true}
