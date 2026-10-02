@@ -82,7 +82,7 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, company, password } = req.body;
+  const { name, company, password, currentPassword } = req.body;
   const user = req.user;
 
   if (name !== undefined) {
@@ -96,8 +96,22 @@ export const updateProfile = asyncHandler(async (req, res) => {
     user.company = company.trim();
   }
   if (password !== undefined) {
+    // Changing a password requires proving ownership of the account by
+    // supplying the current one — the stored hash is not loaded by `protect`
+    // (password has select:false), so re-read it here.
+    if (typeof currentPassword !== "string" || !currentPassword) {
+      throw new ApiError(400, "Your current password is required to set a new one");
+    }
     const passwordError = validatePassword(password);
     if (passwordError) throw new ApiError(400, passwordError);
+
+    const withHash = await User.findById(user._id).select("+password");
+    if (!withHash || !(await withHash.matchPassword(currentPassword))) {
+      throw new ApiError(401, "Your current password is incorrect");
+    }
+    if (await withHash.matchPassword(password)) {
+      throw new ApiError(400, "Your new password must be different from your current one");
+    }
     user.password = password;
   }
 

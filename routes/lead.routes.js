@@ -29,6 +29,9 @@ router.get("/:id/stage-history", getStageHistory);
 router.patch("/:id/qualification", updateQualification);
 router.patch("/:id/assign", authorize("admin", "manager"), assignLead);
 router.route("/").get(getLeads).post(createLead);
-router.route("/:id").get(getLead).put(updateLead).delete(deleteLead);
+router.route("/:id").get(getLead).put(updateLead);
+// Deleting a lead is a manager/admin capability; agents work their pipeline
+// but cannot remove records (mirrors a Zoho Standard profile without delete).
+router.delete("/:id", authorize("admin", "manager"), deleteLead);
 
 export default router;
