@@ -2,78 +2,81 @@ import {User} from "../models/User.js";
 import {Lead} from "../models/Lead.js";
 import {Interaction} from "../models/Interaction.js";
 import {StageHistory} from "../models/StageHistory.js";
+import {createStoredNotification} from "./notification.controller.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import {normalizeEmail, normalizeName, validateEmail, validateName, validatePhone} from "../utils/validation.js";
-import {pickRoundRobinAssignee} from "../services/org.service.js";
-import {createStoredNotification} from "./notification.controller.js";
 
-/** Resolve an active org owner (admin) by its public form slug. */
-const findOrgBySlug = async (slug) => {
-  if (!slug || typeof slug !== "string") return null;
-  return User.findOne({"orgSettings.slug": slug.toLowerCase().trim(), active: true});
+// Resolve the account that owns a public link, or 404 if the token is unknown.
+const ownerFromToken = async (token) => {
+  if (typeof token !== "string" || !token.trim()) throw new ApiError(404, "This form link is not valid");
+  const user = await User.findOne({publicToken: token});
+  if (!user) throw new ApiError(404, "This form link is not valid or has been disabled");
+  return user;
 };
 
-// GET /api/public/orgs/:orgSlug — minimal branding for the public form.
-export const getPublicOrg = asyncHandler(async (req, res) => {
-  const org = await findOrgBySlug(req.params.orgSlug);
-  if (!org) throw new ApiError(404, "This form is not available");
-  res.json({success: true, org: {name: org.orgSettings?.name || org.company || org.name, slug: org.orgSettings.slug}});
+// Public: lightweight info so the form can greet the visitor with the business name.
+export const getPublicForm = asyncHandler(async (req, res) => {
+  const user = await ownerFromToken(req.params.token);
+  res.json({success: true, business: user.company || user.name});
 });
 
-// POST /api/public/leads/:orgSlug — unauthenticated, rate-limited lead capture.
+// Public: anyone with the link may submit one lead. Inputs are validated the
+// same way the authenticated lead form is, so bad data never reaches the CRM.
 export const submitPublicLead = asyncHandler(async (req, res) => {
-  const {name, email, phone, phoneCountry, company, message, website} = req.body;
-
-  // Honeypot: real users never fill this hidden field. Pretend success so bots
-  // don't learn they were caught.
-  if (website) return res.status(201).json({success: true, message: "Thanks! We'll be in touch shortly."});
-
-  const org = await findOrgBySlug(req.params.orgSlug);
-  if (!org) throw new ApiError(404, "This form is not available");
+  const user = await ownerFromToken(req.params.token);
+  const {name, email, phone, company, message} = req.body;
 
   const normalizedName = normalizeName(name);
-  const normalizedEmail = normalizeEmail(email || "");
   const nameError = validateName(normalizedName, "Name");
-  const emailError = email ? validateEmail(normalizedEmail) : null;
-  const phoneError = phone ? validatePhone(String(phone).trim(), phoneCountry || "CM") : null;
-  if (nameError || emailError || phoneError) throw new ApiError(400, nameError || emailError || phoneError);
-  if (!normalizedEmail && !phone) throw new ApiError(400, "Please provide an email or phone number so we can reach you");
-  if (message && String(message).length > 2000) throw new ApiError(400, "Message cannot exceed 2000 characters");
+  if (nameError) throw new ApiError(400, nameError);
 
-  const assignedTo = org.orgSettings?.autoAssign ? await pickRoundRobinAssignee(org) : org._id;
+  const normalizedEmail = normalizeEmail(email);
+  const emailError = validateEmail(normalizedEmail);
+  if (emailError) throw new ApiError(400, emailError);
+
+  const trimmedPhone = typeof phone === "string" ? phone.trim() : "";
+  const phoneError = validatePhone(trimmedPhone, "CM");
+  if (phoneError) throw new ApiError(400, phoneError);
+
+  if (!normalizedEmail && !trimmedPhone) {
+    throw new ApiError(400, "Please provide an email address or a phone number so we can reach you");
+  }
+
+  if (company !== undefined && (typeof company !== "string" || company.length > 200)) {
+    throw new ApiError(400, "Company must be 200 characters or fewer");
+  }
+  if (message !== undefined && (typeof message !== "string" || message.length > 5000)) {
+    throw new ApiError(400, "Message must be 5000 characters or fewer");
+  }
 
   const lead = await Lead.create({
-    owner: org._id,
-    org: org._id,
-    assignedTo,
+    owner: user._id,
     name: normalizedName,
     email: normalizedEmail,
-    phone: phone ? String(phone).trim() : "",
-    phoneCountry: phoneCountry || "CM",
-    company: typeof company === "string" ? company.trim().slice(0, 100) : "",
-    source: "Website",
+    phone: trimmedPhone,
+    company: typeof company === "string" ? company.trim() : "",
+    notes: typeof message === "string" ? message.trim() : "",
+    source: "Public Form",
     status: "New",
-    notes: message ? String(message).trim().slice(0, 2000) : "",
+    priority: "Medium",
   });
 
   try {
-    await StageHistory.create({leadId: lead._id, changedBy: org._id, fromStage: null, toStage: "New", changedAt: lead.createdAt});
-    await Interaction.create({leadId: lead._id, createdBy: org._id, type: "NOTE", channel: "NOTE", summary: `Lead captured from the website form${message ? `: "${String(message).trim().slice(0, 300)}"` : ""}`, timestamp: lead.createdAt});
-  } catch {
-    // Timeline seeding is best-effort; the lead itself is what matters.
-  }
-
-  if (assignedTo) {
+    await StageHistory.create({leadId: lead._id, changedBy: user._id, fromStage: null, toStage: "New", changedAt: lead.createdAt});
+    await Interaction.create({leadId: lead._id, createdBy: user._id, type: "NOTE", channel: "NOTE", summary: "Lead submitted through the public form", timestamp: lead.createdAt});
     await createStoredNotification({
-      owner: assignedTo,
-      type: "LEAD_WEB",
-      title: `New website lead: ${lead.name}`,
-      message: `${lead.name}${lead.company ? ` (${lead.company})` : ""} submitted the public form.`,
-      details: message ? String(message).trim().slice(0, 500) : "",
+      owner: user._id,
+      type: "LEAD_NEW",
+      title: `New lead: ${lead.name}`,
+      message: `${lead.name}${lead.company ? ` from ${lead.company}` : ""} submitted the public lead form.`,
+      details: lead.notes ? lead.notes.slice(0, 200) : "",
       lead: lead._id,
     });
+  } catch (error) {
+    // Best-effort side effects — never fail the public submission over them.
+    console.error("Public lead side-effect error:", error?.message || error);
   }
 
-  res.status(201).json({success: true, message: "Thanks! We'll be in touch shortly."});
+  res.status(201).json({success: true, message: "Thank you! Your details were received."});
 });

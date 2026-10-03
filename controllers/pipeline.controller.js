@@ -2,7 +2,6 @@ import {Lead, LEAD_STATUSES} from "../models/Lead.js";
 import {StageHistory} from "../models/StageHistory.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
-import {buildScope} from "../utils/scope.js";
 
 const activeStages = LEAD_STATUSES.filter((stage) => stage !== "Won" && stage !== "Lost");
 
@@ -14,7 +13,7 @@ const formatDuration = (hours) => {
 };
 
 export const getStageHistory = asyncHandler(async (req, res) => {
-  const lead = await Lead.findOne({_id: req.params.id, ...buildScope(req)}).select("_id");
+  const lead = await Lead.findOne({_id: req.params.id, owner: req.user._id}).select("_id");
   if (!lead) throw new ApiError(404, "Lead not found");
   const histories = await StageHistory.find({leadId: lead._id})
     .sort({changedAt: -1, createdAt: -1})
@@ -24,8 +23,9 @@ export const getStageHistory = asyncHandler(async (req, res) => {
 });
 
 export const getPipelineIntelligence = asyncHandler(async (req, res) => {
+  const owner = req.user._id;
   const now = new Date();
-  const leads = await Lead.find(buildScope(req)).select("_id status").lean();
+  const leads = await Lead.find({owner}).select("_id status").lean();
   const leadIds = leads.map((lead) => lead._id);
   const histories = await StageHistory.find({leadId: {$in: leadIds}}).sort({changedAt: 1}).lean();
   const byLead = new Map();

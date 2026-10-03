@@ -23,73 +23,83 @@ const fromNow = (days, hour = 10) => {
   return date;
 };
 
+// Realistic pipeline for Infonova Consulting SARL (Yaoundé): Cameroonian SMEs and
+// entrepreneurs asking for the firm's real services — networks, cybersecurity,
+// video surveillance, cloud, web/mobile development, ERP, graphic design and IT
+// training. All deal values are in XAF (FCFA).
 const leadsData = [
-  {name: "Amina Njoya", company: "Mboa Cloud Services", email: "procurement@mboa-cloud.test", phone: "+237 690 000 101", status: "New", priority: "High", source: "Website", value: 4200000, notes: "Requested a cloud migration assessment.", nextAction: "Call procurement about the discovery brief", nextActionDueAt: fromNow(0, 14), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: false, needIdentified: true},
-  {name: "Etienne Mbarga", company: "Sahel Freight Network", email: "operations@sahel-freight.test", phone: "+237 690 000 102", status: "New", priority: "Medium", source: "Referral", value: 850000, notes: "New referral from a Douala logistics partner."},
-  {name: "Grace Tanyi", company: "Buea Learning Hub", email: "director@buea-learning.test", phone: "+237 690 000 103", status: "New", priority: "Low", source: "Social", value: 180000, notes: "No response yet; compare with education pricing."},
-  {name: "Mireille Fombad", company: "Kumba Fresh Market", email: "owner@kumba-fresh.test", phone: "+237 690 000 104", status: "New", priority: "Medium", source: "Event", value: 300000, notes: "Met at a local retail owners forum."},
-  {name: "Boris Ekani", company: "Littoral Buildworks", email: "projects@littoral-buildworks.test", phone: "+237 690 000 105", status: "Qualified", priority: "High", source: "Referral", value: 12500000, notes: "Budget approved for procurement workflow.", nextAction: "Send revised implementation plan", nextActionDueAt: fromNow(1, 11), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
-  {name: "Nora Atangana", company: "Centreline Clinics", email: "admin@centreline-clinics.test", phone: "+237 690 000 106", status: "Qualified", priority: "Medium", source: "Website", value: 2400000, notes: "Needs appointment and patient follow-up workflow.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: false, budgetKnown: true, timelineKnown: false, needIdentified: true},
-  {name: "Pauline Etoa", company: "Green Valley Agro", email: "commercial@green-valley-agro.test", phone: "+237 690 000 107", status: "Qualified", priority: "Low", source: "Cold Outreach", value: 700000, notes: "Interested but timing is uncertain.", qualificationStatus: "QUALIFIED", buyingIntent: "LOW", decisionMakerIdentified: false, budgetKnown: false, timelineKnown: false, needIdentified: true},
-  {name: "Simon Tchoumi", company: "Nexa Telecom Partners", email: "sales@nexa-telecom.test", phone: "+237 690 000 108", status: "Qualified", priority: "High", source: "Website", value: 6800000, notes: "Regional sales team wants shared visibility.", nextAction: "Confirm technical requirements", nextActionDueAt: fromNow(3, 9), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: true, needIdentified: true},
-  {name: "Clarisse Wamba", company: "Douala Trade Finance", email: "relationship@douala-trade-finance.test", phone: "+237 690 000 109", status: "Proposal", priority: "High", source: "Referral", value: 9200000, notes: "Proposal sent to the finance committee.", nextAction: "Follow up on proposal review", nextActionDueAt: ago(1, 15), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
-  {name: "David Nkem", company: "Mount Cameroon Security", email: "operations@mount-cameroon-security.test", phone: "+237 690 000 110", status: "Proposal", priority: "Medium", source: "Event", value: 3600000, notes: "Asked for a phased rollout quotation.", nextAction: "Call operations about phased pricing", nextActionDueAt: fromNow(1, 16), qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: true, needIdentified: true},
-  {name: "Blaise Nono", company: "Wouri Hospitality Group", email: "commercial@wouri-hospitality.test", phone: "+237 690 000 111", status: "Proposal", priority: "Low", source: "Website", value: 1100000, notes: "Proposal has not been reviewed yet.", qualificationStatus: "QUALIFIED", buyingIntent: "LOW", decisionMakerIdentified: false, budgetKnown: false, timelineKnown: false, needIdentified: true},
-  {name: "Ruth Manka", company: "Atlas Manufacturing Cameroon", email: "procurement@atlas-mfg.test", phone: "+237 690 000 112", status: "Proposal", priority: "High", source: "Cold Outreach", value: 18500000, notes: "Large account with a formal procurement cycle.", nextAction: "Schedule procurement committee follow-up", nextActionDueAt: fromNow(5, 10), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
-  {name: "Jean-Paul Mvondo", company: "UrbanNest Realty", email: "director@urbannest-realty.test", phone: "+237 690 000 113", status: "Won", priority: "High", source: "Referral", value: 5400000, notes: "Won after property enquiry pilot.", qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
-  {name: "Sophie Essomba", company: "Kivu Professional Services", email: "hello@kivu-professional.test", phone: "+237 690 000 114", status: "Won", priority: "Medium", source: "Website", value: 1500000, notes: "Converted after a short implementation cycle.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
-  {name: "Moussa Bello", company: "Northern Route Transport", email: "fleet@northern-route.test", phone: "+237 690 000 115", status: "Won", priority: "Low", source: "Event", value: 900000, notes: "Won with a small fleet package.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: true, needIdentified: true},
-  {name: "Carine Fofung", company: "Bamenda Retail Cooperative", email: "manager@bamenda-retail.test", phone: "+237 690 000 116", status: "Lost", priority: "Medium", source: "Social", value: 2100000, notes: "Lost to an incumbent after budget review.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
-  {name: "Hervé Ngassa", company: "Coastal Energy Services", email: "commercial@coastal-energy.test", phone: "+237 690 000 117", status: "Lost", priority: "High", source: "Cold Outreach", value: 10200000, notes: "Project postponed with no decision date.", qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: false, needIdentified: true},
-  {name: "Lucie Abena", company: "Equator Health Supplies", email: "sales@equator-health.test", phone: "+237 690 000 118", status: "Lost", priority: "Low", source: "Referral", value: 450000, notes: "Requirements did not match the current package.", qualificationStatus: "DISQUALIFIED", buyingIntent: "LOW", decisionMakerIdentified: false, budgetKnown: false, timelineKnown: false, needIdentified: false},
-  {name: "Felix Tita", company: "Savanna Advisory", email: "partner@savanna-advisory.test", phone: "+237 690 000 119", status: "Qualified", priority: "Medium", source: "Website", value: 1250000, notes: "Needs internal approval before next step.", qualificationStatus: "UNQUALIFIED", buyingIntent: null, decisionMakerIdentified: false, budgetKnown: false, timelineKnown: false, needIdentified: false},
+  // ── New ──────────────────────────────────────────────────────────────
+  {name: "Pascaline Ngo Bell", company: "Boulangerie La Pascaline", email: "contact@boulangerie-pascaline.cm", phone: "+237 6 99 10 22 01", status: "New", priority: "Medium", source: "Website", value: 850000, notes: "Wants a point-of-sale setup with two CCTV cameras for the shop front.", nextAction: "Call to schedule an on-site survey", nextActionDueAt: fromNow(1, 10)},
+  {name: "Alain Fotso", company: "Pharmacie du Centre", email: "pharmacie.centre@gmail.com", phone: "+237 6 94 55 18 77", status: "New", priority: "High", source: "Referral", value: 1600000, notes: "Needs a small office network and a yearly IT support contract.", nextAction: "Send IT support contract options", nextActionDueAt: fromNow(2, 11), qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: false, needIdentified: true},
+  {name: "Chantal Mbia", company: "Cabinet Médical Essos", email: "cabinet.essos@gmail.com", phone: "+237 6 77 40 09 12", status: "New", priority: "Low", source: "Social", value: 1200000, notes: "Interested in a website with online appointment booking. Still comparing prices."},
+  {name: "Ibrahim Saidou", company: "Quincaillerie Mvan", email: "quincaillerie.mvan@gmail.com", phone: "+237 6 90 33 44 55", status: "New", priority: "Medium", source: "Cold Outreach", value: 700000, notes: "Looking for simple stock and invoicing software for the hardware store."},
+  {name: "Pauline Ze", company: "École Bilingue La Semence", email: "direction@ecole-lasemence.cm", phone: "+237 6 98 71 20 34", status: "New", priority: "Low", source: "Event", value: 2300000, notes: "Met at an SME forum; wants a 15-station computer lab plus Office training for staff."},
+
+  // ── Qualified ────────────────────────────────────────────────────────
+  {name: "Serge Onana", company: "Hôtel Mont Fébé Palace", email: "technique@hotel-montfebe.cm", phone: "+237 6 99 02 88 10", status: "Qualified", priority: "High", source: "Referral", value: 6800000, notes: "Video surveillance upgrade plus guest WiFi across three floors. Budget approved.", nextAction: "Send the revised surveillance + WiFi plan", nextActionDueAt: fromNow(1, 11), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
+  {name: "Marthe Abena", company: "Agro Négoce Mfoundi", email: "dg@agronegoce-mfoundi.cm", phone: "+237 6 95 60 41 23", status: "Qualified", priority: "High", source: "Referral", value: 9500000, notes: "ERP to cover stock, invoicing and supplier payments across two warehouses.", nextAction: "Call about the ERP discovery workshop", nextActionDueAt: fromNow(0, 14), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: false, needIdentified: true},
+  {name: "Jean-Claude Fouda", company: "Microfinance Akwa", email: "si@microfinance-akwa.cm", phone: "+237 6 91 77 30 08", status: "Qualified", priority: "Medium", source: "Website", value: 4200000, notes: "Requested a cybersecurity audit after a phishing incident.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: false, needIdentified: true},
+  {name: "Rodrigue Tchakounté", company: "Supermarché Score Mvog-Mbi", email: "gestion@score-mvogmbi.cm", phone: "+237 6 78 12 90 45", status: "Qualified", priority: "Medium", source: "Cold Outreach", value: 3100000, notes: "Wants CCTV coverage and a reliable in-store network. Needs the quote this month.", nextAction: "Confirm camera count after the site visit", nextActionDueAt: fromNow(3, 9), qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: false, budgetKnown: true, timelineKnown: true, needIdentified: true},
+
+  // ── Proposal ─────────────────────────────────────────────────────────
+  {name: "Nadège Eyenga", company: "Clinique Odontologique du Lac", email: "gerance@clinique-du-lac.cm", phone: "+237 6 99 44 51 72", status: "Proposal", priority: "High", source: "Referral", value: 5400000, notes: "Proposal sent for a patient booking web & mobile app.", nextAction: "Follow up on the app proposal", nextActionDueAt: ago(1, 15), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
+  {name: "Emmanuel Njike", company: "Transit Logistics Douala", email: "it@transit-logistics.cm", phone: "+237 6 90 18 63 27", status: "Proposal", priority: "High", source: "Event", value: 11800000, notes: "Multi-site network infrastructure linking the Douala and Yaoundé offices.", nextAction: "Schedule the technical validation meeting", nextActionDueAt: fromNow(5, 10), qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
+  {name: "Brigitte Manga", company: "Imprimerie Saint Paul", email: "contact@imprimerie-saintpaul.cm", phone: "+237 6 77 09 55 14", status: "Proposal", priority: "Medium", source: "Website", value: 1900000, notes: "Brand refresh (graphic design) plus a catalogue website.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: true, needIdentified: true},
+  {name: "Thomas Bikoï", company: "Groupe Scolaire Les Lauréats", email: "administration@gs-laureats.cm", phone: "+237 6 98 30 76 51", status: "Proposal", priority: "Low", source: "Social", value: 1350000, notes: "A full-stack web development cohort for 18 students. Awaiting the board review.", qualificationStatus: "QUALIFIED", buyingIntent: "LOW", decisionMakerIdentified: false, budgetKnown: false, timelineKnown: false, needIdentified: true},
+
+  // ── Won ──────────────────────────────────────────────────────────────
+  {name: "Yves Kamga", company: "Restaurant Le Foufou", email: "contact@lefoufou.cm", phone: "+237 6 99 81 40 66", status: "Won", priority: "Medium", source: "Website", value: 1150000, notes: "Won: website, hosting and local SEO package delivered.", qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
+  {name: "Linda Essono", company: "Studio Photo Lumière", email: "studio.lumiere@gmail.com", phone: "+237 6 94 22 17 88", status: "Won", priority: "Low", source: "Social", value: 450000, notes: "Won: logo and full visual identity package.", qualificationStatus: "QUALIFIED", buyingIntent: "MEDIUM", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
+  {name: "Paul Atangana", company: "ONG Santé Pour Tous", email: "operations@sante-pourtous.cm", phone: "+237 6 90 50 33 19", status: "Won", priority: "High", source: "Referral", value: 2800000, notes: "Won: annual IT maintenance and support contract for 40 workstations.", qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: true, needIdentified: true},
+
+  // ── Lost ─────────────────────────────────────────────────────────────
+  {name: "Sandrine Owona", company: "Boutique Mode Élégance", email: "mode.elegance@gmail.com", phone: "+237 6 77 66 10 29", status: "Lost", priority: "Low", source: "Social", value: 350000, notes: "Lost: chose a freelance developer with a cheaper quote.", qualificationStatus: "QUALIFIED", buyingIntent: "LOW", decisionMakerIdentified: true, budgetKnown: true, timelineKnown: false, needIdentified: true},
+  {name: "Moussa Hamadou", company: "Entreprise BTP Sahel", email: "projets@btp-sahel.cm", phone: "+237 6 95 12 47 80", status: "Lost", priority: "High", source: "Cold Outreach", value: 7600000, notes: "Lost: infrastructure project postponed after a budget freeze.", qualificationStatus: "QUALIFIED", buyingIntent: "HIGH", decisionMakerIdentified: true, budgetKnown: false, timelineKnown: false, needIdentified: true},
+
+  // ── Qualified stage, still gathering information ───────────────────────
+  {name: "Georges Mballa", company: "Cabinet Fiduciaire Conseil", email: "contact@fiduciaire-conseil.cm", phone: "+237 6 98 04 61 35", status: "Qualified", priority: "Medium", source: "Public Form", value: 1500000, notes: "Wants cloud backup and an email migration. Needs internal approval first.", qualificationStatus: "UNQUALIFIED", buyingIntent: null, decisionMakerIdentified: false, budgetKnown: false, timelineKnown: false, needIdentified: false},
 ];
 
 const journeys = {
-  "Littoral Buildworks": [[-18, "New"], [-16, "Qualified"]],
-  "Douala Trade Finance": [[-30, "New"], [-26, "Qualified"], [-18, "Proposal"]],
-  "UrbanNest Realty": [[-42, "New"], [-38, "Qualified"], [-28, "Proposal"], [-18, "Won"]],
-  "Bamenda Retail Cooperative": [[-28, "New"], [-22, "Lost"]],
-  "Northern Route Transport": [[-24, "New"], [-20, "Qualified"], [-12, "Proposal"], [-5, "Won"]],
-  "Hervé Ngassa": [[-35, "New"], [-30, "Qualified"], [-20, "Lost"]],
+  "Hôtel Mont Fébé Palace": [[-18, "New"], [-16, "Qualified"]],
+  "Microfinance Akwa": [[-30, "New"], [-26, "Qualified"]],
+  "Clinique Odontologique du Lac": [[-30, "New"], [-26, "Qualified"], [-18, "Proposal"]],
+  "Restaurant Le Foufou": [[-42, "New"], [-38, "Qualified"], [-28, "Proposal"], [-18, "Won"]],
+  "Boutique Mode Élégance": [[-28, "New"], [-22, "Lost"]],
+  "ONG Santé Pour Tous": [[-24, "New"], [-20, "Qualified"], [-12, "Proposal"], [-5, "Won"]],
+  "Entreprise BTP Sahel": [[-35, "New"], [-30, "Qualified"], [-20, "Lost"]],
 };
 
 const interactionTemplates = [
-  ["CALL", "Call", "OUTBOUND", "CONNECTED", "Discussed the client's requirements and confirmed the decision timeline."],
-  ["WHATSAPP", "WhatsApp", "INBOUND", "REPLIED", "Client requested the revised quotation."],
-  ["EMAIL", "Email", "OUTBOUND", "QUOTE_SENT", "Quotation sent to procurement for review."],
-  ["MEETING", "Meeting", "OUTBOUND", "MEETING_BOOKED", "Product demonstration completed with the operations team."],
-  ["NOTE", "Note", "OUTBOUND", "OTHER", "Decision expected after the internal management meeting."],
+  ["CALL", "Call", "OUTBOUND", "CONNECTED", "Discussed the requirements and confirmed the project timeline."],
+  ["WHATSAPP", "WhatsApp", "INBOUND", "REPLIED", "Client asked for the revised quotation."],
+  ["EMAIL", "Email", "OUTBOUND", "QUOTE_SENT", "Sent the service quotation for review."],
+  ["MEETING", "Meeting", "OUTBOUND", "MEETING_BOOKED", "On-site assessment completed with the client's team."],
+  ["NOTE", "Note", "OUTBOUND", "OTHER", "Decision expected after the client's internal meeting."],
 ];
 
 async function seed() {
   await connectDB();
-  const password = await bcrypt.hash("InfonovaSeed2026!", 10);
+  const password = await bcrypt.hash("Ambroise#4115", 10);
   const user = await User.findOneAndUpdate(
-    {email: "demo@infonova.test"},
-    {name: "Demo Sales Manager", email: "demo@infonova.test", password, company: "Infonova Demo Business", role: "admin", active: true},
+    {email: "ambroiseab11@gmail.com"},
+    {name: "Ambroise", email: "ambroiseab11@gmail.com", password, company: "Infonova"},
     {upsert: true, new: true, setDefaultsOnInsert: true},
   );
   const owner = user._id;
-  // Make the demo user a self-owned org admin so the multi-actor scoping works.
-  user.org = owner;
-  user.orgSettings = {name: "Infonova Demo Business", slug: "infonova-demo", autoAssign: false, roundRobinCursor: 0};
-  await user.save();
   await Promise.all([
     Lead.deleteMany({owner}), Contact.deleteMany({owner}), Note.deleteMany({owner}), Task.deleteMany({owner}),
     Notification.deleteMany({owner}),
   ]);
   const contacts = await Contact.insertMany([
-    {owner, org: owner, assignedTo: owner, name: "Nadia Fomo", email: "nadia@mboa-cloud.test", phone: "+237 690 001 201", company: "Mboa Cloud Services", title: "Procurement Lead", tags: ["technology", "priority"]},
-    {owner, org: owner, assignedTo: owner, name: "Armand Taku", email: "armand@littoral-buildworks.test", phone: "+237 690 001 202", company: "Littoral Buildworks", title: "Projects Director", tags: ["construction"]},
-    {owner, org: owner, assignedTo: owner, name: "Mireille Kengne", email: "mireille@centreline-clinics.test", phone: "+237 690 001 203", company: "Centreline Clinics", title: "Clinic Administrator", tags: ["healthcare"]},
-    {owner, org: owner, assignedTo: owner, name: "Patrick Ewane", email: "patrick@urbannest-realty.test", phone: "+237 690 001 204", company: "UrbanNest Realty", title: "Managing Director", tags: ["real-estate", "won"]},
+    {owner, name: "Marthe Abena", email: "dg@agronegoce-mfoundi.cm", phone: "+237 6 95 60 41 23", company: "Agro Négoce Mfoundi", title: "Directrice Générale", tags: ["erp", "priority"]},
+    {owner, name: "Serge Onana", email: "technique@hotel-montfebe.cm", phone: "+237 6 99 02 88 10", company: "Hôtel Mont Fébé Palace", title: "Responsable Technique", tags: ["infrastructure"]},
+    {owner, name: "Nadège Eyenga", email: "gerance@clinique-du-lac.cm", phone: "+237 6 99 44 51 72", company: "Clinique Odontologique du Lac", title: "Gérante", tags: ["healthcare"]},
+    {owner, name: "Yves Kamga", email: "contact@lefoufou.cm", phone: "+237 6 99 81 40 66", company: "Restaurant Le Foufou", title: "Propriétaire", tags: ["web", "won"]},
   ]);
   const leads = await Lead.insertMany(leadsData.map((lead) => ({
     ...lead,
     owner,
-    org: owner,
-    assignedTo: owner,
     createdAt: ago(Math.abs(journeys[lead.company]?.[0]?.[0] ?? -1), 9),
   })));
   const leadByCompany = new Map(leads.map((lead) => [lead.company, lead]));
@@ -103,9 +113,9 @@ async function seed() {
   await StageHistory.insertMany(histories);
 
   const interactions = [];
-  for (const company of ["Douala Trade Finance", "UrbanNest Realty", "Northern Route Transport", "Littoral Buildworks", "Mboa Cloud Services"]) {
+  for (const company of ["Restaurant Le Foufou", "ONG Santé Pour Tous", "Clinique Odontologique du Lac", "Hôtel Mont Fébé Palace", "Agro Négoce Mfoundi"]) {
     const lead = leadByCompany.get(company);
-    const count = company === "UrbanNest Realty" ? 11 : company === "Douala Trade Finance" ? 4 : 2;
+    const count = company === "Restaurant Le Foufou" ? 11 : company === "Clinique Odontologique du Lac" ? 4 : 2;
     for (let index = 0; index < count; index += 1) {
       const template = interactionTemplates[index % interactionTemplates.length];
       interactions.push({leadId: lead._id, createdBy: owner, type: template[0], channel: template[0], direction: template[2], outcome: template[3], summary: template[4], timestamp: ago(Math.max(1, 25 - index * 2), 9 + (index % 5))});
@@ -113,26 +123,26 @@ async function seed() {
   }
   await Interaction.insertMany(interactions);
   await Interaction.insertMany([
-    {leadId: leadByCompany.get("Sahel Freight Network")._id, createdBy: owner, type: "NOTE", channel: "NOTE", summary: "Referral received and awaiting first response.", timestamp: ago(1)},
-    {leadId: leadByCompany.get("Bamenda Retail Cooperative")._id, createdBy: owner, type: "CALL", channel: "CALL", direction: "OUTBOUND", outcome: "LOST", summary: "Client selected an incumbent provider after budget review.", timestamp: ago(7)},
+    {leadId: leadByCompany.get("Pharmacie du Centre")._id, createdBy: owner, type: "NOTE", channel: "NOTE", summary: "Referral received; awaiting the first support-contract discussion.", timestamp: ago(1)},
+    {leadId: leadByCompany.get("Boutique Mode Élégance")._id, createdBy: owner, type: "CALL", channel: "CALL", direction: "OUTBOUND", outcome: "LOST", summary: "Client chose a freelance developer after comparing quotes.", timestamp: ago(7)},
   ]);
 
   await Note.insertMany([
-    {owner, org: owner, lead: leadByCompany.get("Mboa Cloud Services")._id, content: "Discovery brief should cover data residency, migration timing, and support hours.", pinned: true},
-    {owner, org: owner, lead: leadByCompany.get("Douala Trade Finance")._id, content: "Decision expected after the finance committee review.", pinned: true},
-    {owner, org: owner, contact: contacts[2]._id, content: "Clinic administrator prefers a phased rollout after the current quarter.", pinned: false},
-    {owner, org: owner, content: "Keep the next Action Center review focused on overdue proposals.", pinned: false},
+    {owner, lead: leadByCompany.get("Agro Négoce Mfoundi")._id, content: "ERP scope should cover stock, invoicing and supplier payments across both warehouses.", pinned: true},
+    {owner, lead: leadByCompany.get("Clinique Odontologique du Lac")._id, content: "Decision expected after the clinic's monthly management meeting.", pinned: true},
+    {owner, contact: contacts[2]._id, content: "Prefers a phased rollout starting with the patient booking module.", pinned: false},
+    {owner, content: "Keep the next Action Center review focused on overdue proposals and pending site surveys.", pinned: false},
   ]);
-  await Notification.create({owner, type: "AI_INSIGHT", title: "AI pipeline insight", message: "Several active opportunities need a dated next action to keep the pipeline moving.", details: "Review the Action Center before the next sales block.", fingerprint: "seed:ai-insight:pipeline"});
+  await Notification.create({owner, type: "AI_INSIGHT", title: "AI pipeline insight", message: "Several proposals are waiting on a dated follow-up — confirm next steps to keep projects moving.", details: "Review the Action Center before the next client visit."});
 
   const taskSpecs = [
-    ["Mboa Cloud Services", "Call procurement about the discovery brief", fromNow(0, 14), "High", "Pending"],
-    ["Littoral Buildworks", "Send revised implementation plan", fromNow(1, 11), "High", "Pending"],
-    ["Douala Trade Finance", "Follow up on proposal review", ago(1, 15), "High", "Pending"],
-    ["UrbanNest Realty", "Send onboarding summary", ago(8), "Medium", "Completed"],
-    ["Northern Route Transport", "Confirm renewal contact", fromNow(7), "Low", "Pending"],
+    ["Agro Négoce Mfoundi", "Call about the ERP discovery workshop", fromNow(0, 14), "High", "Pending"],
+    ["Hôtel Mont Fébé Palace", "Send the revised surveillance + WiFi plan", fromNow(1, 11), "High", "Pending"],
+    ["Clinique Odontologique du Lac", "Follow up on the app proposal", ago(1, 15), "High", "Pending"],
+    ["Restaurant Le Foufou", "Send onboarding and hosting handover", ago(8), "Medium", "Completed"],
+    ["ONG Santé Pour Tous", "Confirm the annual maintenance renewal", fromNow(7), "Low", "Pending"],
   ];
-  const tasks = await Task.insertMany(taskSpecs.map(([company, title, dueDate, priority, status]) => ({owner, org: owner, assignedTo: owner, relatedLead: leadByCompany.get(company)._id, title, dueDate, priority, status, isNextAction: Boolean(leadByCompany.get(company).nextAction), completedAt: status === "Completed" ? ago(7) : null})));
+  const tasks = await Task.insertMany(taskSpecs.map(([company, title, dueDate, priority, status]) => ({owner, relatedLead: leadByCompany.get(company)._id, title, dueDate, priority, status, isNextAction: Boolean(leadByCompany.get(company).nextAction), completedAt: status === "Completed" ? ago(7) : null})));
   for (const task of tasks) {
     const lead = leads.find((candidate) => String(candidate._id) === String(task.relatedLead));
     if (lead && lead.nextAction) {
@@ -140,8 +150,8 @@ async function seed() {
       await lead.save();
     }
   }
-  console.log(`Seeded ${leads.length} leads, ${contacts.length} contacts, ${interactions.length + 2} interactions, ${tasks.length} tasks for demo@infonova.test`);
-  console.log("Demo password: InfonovaSeed2026!");
+  console.log(`Seeded ${leads.length} leads, ${contacts.length} contacts, ${interactions.length + 2} interactions, ${tasks.length} tasks for ambroiseab11@gmail.com`);
+  console.log("Demo password: Ambroise#4115");
 }
 
 seed().catch((error) => {

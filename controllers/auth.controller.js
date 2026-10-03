@@ -1,9 +1,9 @@
+import crypto from "node:crypto";
 import {User} from "../models/User.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import {generateToken} from "../utils/generateToken.js";
 import {normalizeEmail, normalizeName, validateEmail, validateName, validatePassword} from "../utils/validation.js";
-import {ensureUniqueSlug} from "../services/org.service.js";
 
 const toClientUser = (user) => ({
   id: user._id,
@@ -11,13 +11,6 @@ const toClientUser = (user) => ({
   email: user.email,
   company: user.company,
   createdAt: user.createdAt,
-  role: user.role,
-  org: user.org,
-  active: user.active,
-  // Only the org owner carries meaningful settings; harmless for others.
-  orgSettings: user.orgSettings
-    ? {name: user.orgSettings.name, slug: user.orgSettings.slug, autoAssign: user.orgSettings.autoAssign}
-    : undefined,
 });
 
 export const register = asyncHandler(async (req, res) => {
@@ -35,21 +28,7 @@ export const register = asyncHandler(async (req, res) => {
     throw new ApiError(400, "An account with this email already exists");
   }
 
-  const companyName = typeof company === "string" ? company.trim() : "";
-  const user = await User.create({ name: normalizedName, email: normalizedEmail, password, company: companyName });
-
-  // Every self-registration starts a new workspace: the user is its admin and
-  // its org points at itself. This keeps the solo-admin flow identical.
-  user.role = "admin";
-  user.org = user._id;
-  user.active = true;
-  user.orgSettings = {
-    name: companyName || normalizedName,
-    slug: await ensureUniqueSlug(companyName || normalizedName),
-    autoAssign: false,
-    roundRobinCursor: 0,
-  };
-  await user.save();
+  const user = await User.create({ name: normalizedName, email: normalizedEmail, password, company: typeof company === "string" ? company.trim() : "" });
 
   res.status(201).json({
     success: true,
@@ -82,7 +61,7 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, company, password } = req.body;
+  const { name, company, password, currentPassword } = req.body;
   const user = req.user;
 
   if (name !== undefined) {
@@ -96,6 +75,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
     user.company = company.trim();
   }
   if (password !== undefined) {
+    // Changing the password requires the current one, so a hijacked session can't silently reset it.
+    if (typeof currentPassword !== "string" || !currentPassword) throw new ApiError(400, "Current password is required to set a new password");
+    const withPassword = await User.findById(user._id).select("+password");
+    if (!withPassword || !(await withPassword.matchPassword(currentPassword))) {
+      throw new ApiError(401, "Current password is incorrect");
+    }
     const passwordError = validatePassword(password);
     if (passwordError) throw new ApiError(400, passwordError);
     user.password = password;
@@ -103,4 +88,15 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   await user.save();
   res.json({ success: true, user: toClientUser(user) });
+});
+
+// Returns the account's shareable public lead-capture token, generating one on
+// first request. The frontend builds the full URL from this token.
+export const getPublicLink = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (!user.publicToken) {
+    user.publicToken = crypto.randomBytes(16).toString("hex");
+    await user.save();
+  }
+  res.json({ success: true, token: user.publicToken });
 });
