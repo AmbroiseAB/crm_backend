@@ -8,8 +8,6 @@ const contactSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    org: {type: mongoose.Schema.Types.ObjectId, ref: "User", index: true, default: null},
-    assignedTo: {type: mongoose.Schema.Types.ObjectId, ref: "User", index: true, default: null},
     name: {
       type: String,
       required: [true, "Contact name is required"],

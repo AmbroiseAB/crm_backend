@@ -12,10 +12,6 @@ const leadSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    // Workspace this lead belongs to (owner's org). Set on create; backfilled by migration.
-    org: {type: mongoose.Schema.Types.ObjectId, ref: "User", index: true, default: null},
-    // Agent responsible for the lead. null = unassigned.
-    assignedTo: {type: mongoose.Schema.Types.ObjectId, ref: "User", index: true, default: null},
     name: {type: String, required: [true, "Lead name is required"], trim: true, minlength: 2, maxlength: 100},
     email: {type: String, trim: true, lowercase: true, default:"", maxlength: 254},
     phone: {type: String, trim:true, default:""},
@@ -34,7 +30,7 @@ const leadSchema = new mongoose.Schema(
     },
     source: {
       type: String,
-      enum: ["Website", "Referral", "Cold Outreach", "Social", "Event", "Other"],
+      enum: ["Website", "Referral", "Cold Outreach", "Social", "Event", "Public Form", "Other"],
       default: "Other",
     },
     value: {type: Number, default: 0, min: 0},

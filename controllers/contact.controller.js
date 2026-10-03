@@ -2,7 +2,6 @@ import {Contact} from "../models/Contact.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import {normalizeEmail, normalizeName, validateEmail, validateName, validatePhone} from "../utils/validation.js";
-import {buildScope} from "../utils/scope.js";
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 const editableContactFields = ["name", "email", "phone", "phoneCountry", "company", "title", "tags", "notes", "favorite"];
@@ -16,7 +15,7 @@ const normalizeContact = (body) => {
 
 export const getContacts = asyncHandler(async (req, res) => {
   const {search, tag} = req.query;
-  const filter = buildScope(req);
+  const filter = {owner: req.user._id};
 
   if (tag) filter.tags = tag;
   if (search) {
@@ -29,23 +28,20 @@ export const getContacts = asyncHandler(async (req, res) => {
 });
 
 export const getContact = asyncHandler(async (req, res) => {
-  const contact = await Contact.findOne({_id: req.params.id, ...buildScope(req)});
+  const contact = await Contact.findOne({_id: req.params.id, owner: req.user._id});
   if (!contact) throw new ApiError(404, "Contact not found");
   res.json({success: true, contact});
 });
 
 export const createContact = asyncHandler(async (req, res) => {
-  const assignedTo = req.body.assignedTo && (req.user.role === "admin" || req.user.role === "manager")
-    ? req.body.assignedTo
-    : req.user._id;
-  const contact = await Contact.create({...normalizeContact(req.body), owner: req.user._id, org: req.user.org, assignedTo});
+  const contact = await Contact.create({...normalizeContact(req.body), owner: req.user._id});
   res.status(201).json({success: true, contact});
 });
 
 export const updateContact = asyncHandler(async (req, res) => {
   const updates = normalizeContact(req.body);
   const contact = await Contact.findOneAndUpdate(
-    {_id: req.params.id, ...buildScope(req)},
+    {_id: req.params.id, owner: req.user._id},
     updates,
     {new: true, runValidators: true},
   );
@@ -56,7 +52,7 @@ export const updateContact = asyncHandler(async (req, res) => {
 export const deleteContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findOneAndDelete({
     _id: req.params.id,
-    ...buildScope(req),
+    owner: req.user._id,
   });
   if (!contact) throw new ApiError(404, "Contact not found");
   res.json({success: true, message: "Contact deleted"});

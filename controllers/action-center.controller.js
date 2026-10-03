@@ -3,7 +3,6 @@ import {Interaction} from "../models/Interaction.js";
 import {Task} from "../models/Task.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import {scoreLead} from "../services/lead-scoring.service.js";
-import {buildScope} from "../utils/scope.js";
 
 const ACTIVE_STATUSES = ["New", "Qualified", "Proposal"];
 const priorityRank = {High: 3, Medium: 2, Low: 1};
@@ -56,15 +55,15 @@ export const classifyLead = ({lead, interactions, tasks, now = new Date()}) => {
 };
 
 export const getActionCenter = asyncHandler(async (req, res) => {
-  const scope = buildScope(req);
+  const owner = req.user._id;
   const now = new Date();
-  const leads = await Lead.find({...scope, status: {$in: ACTIVE_STATUSES}})
+  const leads = await Lead.find({owner, status: {$in: ACTIVE_STATUSES}})
     .sort({priority: -1, value: -1})
     .lean();
   const leadIds = leads.map((lead) => lead._id);
   const [interactions, tasks] = await Promise.all([
     Interaction.find({leadId: {$in: leadIds}}).select("leadId timestamp outcome").lean(),
-    Task.find({org: req.user.org, relatedLead: {$in: leadIds}}).select("_id relatedLead title status dueDate completedAt isNextAction").lean(),
+    Task.find({owner, relatedLead: {$in: leadIds}}).select("_id relatedLead title status dueDate completedAt isNextAction").lean(),
   ]);
 
   const overdue = [];

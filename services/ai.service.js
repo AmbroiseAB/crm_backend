@@ -58,34 +58,6 @@ const aiErrorMessage = (err) => {
 
 export const isAIConfigured = () => Boolean(process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY);
 
-// Google's free tier frequently returns transient 503 ("high demand") and
-// per-minute 429 rate limits. Retry those a few times with backoff so a
-// momentary blip doesn't surface to the user as a failed request.
-const isRetryable = (err) => {
-  const status = Number(err?.status || err?.statusCode || err?.response?.status);
-  const code = err?.code || err?.cause?.code;
-  const details = `${err?.message || ""} ${err?.cause?.message || ""}`.toLowerCase();
-  if (status === 503 || status === 429) return true;
-  if (["ECONNRESET", "ETIMEDOUT", "EAI_AGAIN", "ECONNREFUSED"].includes(code)) return true;
-  return /high demand|unavailable|overloaded|try again|fetch failed|socket/.test(details);
-};
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const callWithRetry = async (fn, attempts = 3) => {
-  let lastErr;
-  for (let i = 0; i < attempts; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      if (i === attempts - 1 || !isRetryable(err)) break;
-      await sleep(600 * (i + 1) + Math.floor(Math.random() * 300));
-    }
-  }
-  throw lastErr;
-};
-
 const extractResponseText = (response) => {
   if (typeof response.text === "string" && response.text.trim()) return response.text.trim();
   if (Array.isArray(response.output)) {
@@ -100,7 +72,7 @@ const extractResponseText = (response) => {
 const generateJSON = async (prompt, schema) => {
   const ai = getClient();
   try {
-    const response = await callWithRetry(() => ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: MODEL(),
       contents: prompt,
       config: {
@@ -108,7 +80,7 @@ const generateJSON = async (prompt, schema) => {
         responseSchema: schema,
         temperature: 0.6,
       },
-    }));
+    });
     const raw = extractResponseText(response);
     if (!raw) {
       throw new ApiError(502, "AI responded with an empty body.");
@@ -124,11 +96,11 @@ const generateJSON = async (prompt, schema) => {
 const generateText = async (prompt, temperature = 0.7) => {
   const ai = getClient();
   try {
-    const response = await callWithRetry(() => ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: MODEL(),
       contents: prompt,
       config: { temperature },
-    }));
+    });
     return response.text.trim();
   } catch (err) {
     console.error("Gemini text error:", err?.message || err);
@@ -193,10 +165,10 @@ Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency sy
   pipeline stage: ${lead?.status || "New"}
   context / notes: ${lead?.notes || "None"}
 
-  Return JSON only with a completing subject line and a complete email body,
-  Use line breaks (\\) in the body. Keep it under 100 words. Sign off as ${
+  Return JSON only with a complete subject line and a complete email body.
+  Separate paragraphs in the body with real line breaks. Keep it under 100 words. Sign off as ${
     sender?.name || "The Infonova team"
-  },`;
+  }.`;
 
   const schema = {
     type: "object",
@@ -204,74 +176,6 @@ Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency sy
       subject: {type: "string"},
       body:{type: "string"},
     },
-    required: ["subject", "body"],
-  };
-
-  return generateJSON(prompt, schema);
-};
-
-const formatTimeline = (timeline = []) =>
-  timeline.length
-    ? timeline
-        .map((event) => `- ${new Date(event.timestamp).toISOString().slice(0, 10)} [${event.type || "NOTE"}${event.outcome ? `/${event.outcome}` : ""}] ${event.summary}`)
-        .join("\n")
-    : "No recorded activity yet.";
-
-export const generateNextBestAction = async ({lead, timeline}) => {
-  const prompt = `You coach a sales rep on how to move a lead forward.
-Use plain, everyday English. Avoid jargon and acronyms. Keep it short and specific.
-Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
-
-Lead:
-Name: ${lead.name || "N/A"}
-Company: ${lead.company || "N/A"}
-Current stage: ${lead.status || "New"}
-Qualification: ${lead.qualificationStatus || "UNQUALIFIED"}
-Potential value: ${lead.value || "0"}
-Notes: ${lead.notes || "None"}
-
-Recent activity (newest last):
-${formatTimeline(timeline)}
-
-Decide the single best next step and write a short, ready-to-send follow-up message
-(WhatsApp/email friendly) the rep can use right now. Return JSON only.`;
-
-  const schema = {
-    type: "object",
-    properties: {
-      recommendedAction: {type: "string", description: "One specific next step in simple words"},
-      reason: {type: "string", description: "One short sentence on why this is the best next step"},
-      followUpMessage: {type: "string", description: "A ready-to-send follow-up message, under 90 words"},
-    },
-    required: ["recommendedAction", "reason", "followUpMessage"],
-  };
-
-  return generateJSON(prompt, schema);
-};
-
-export const generateTimelineEmail = async ({lead, timeline, purpose, tone, sender}) => {
-  const prompt = `You are a senior rep writing on behalf of ${sender?.name || "our team"}${sender?.company ? ` at ${sender.company}` : ""}.
-Write a professional follow-up email in plain, everyday English. Avoid jargon and acronyms. Keep sentences short.
-Use XAF/FCFA for every monetary amount. Never use $, USD, or another currency symbol.
-Ground the email in the conversation so far — reference what actually happened, don't invent facts.
-Purpose: ${purpose || "move the deal forward"}
-Desired tone: ${tone || "friendly and professional"}
-
-Recipient (lead):
-Name: ${lead?.name || "N/A"}
-Company: ${lead?.company || "N/A"}
-Stage: ${lead?.status || "New"}
-Notes: ${lead?.notes || "None"}
-
-Conversation so far (newest last):
-${formatTimeline(timeline)}
-
-Return JSON only with a subject line and a complete body. Use line breaks in the body.
-Keep it under 130 words. Sign off as ${sender?.name || "The Infonova team"}.`;
-
-  const schema = {
-    type: "object",
-    properties: {subject: {type: "string"}, body: {type: "string"}},
     required: ["subject", "body"],
   };
 
